@@ -9,6 +9,8 @@ using UnityEngine.Networking;
 public class PlayerController : NetworkBehaviour {
 
 	[SyncVar]
+	public bool stunned;
+	[SyncVar]
 	Vector3 realPosition = Vector3.zero;
 	[SyncVar]
 	Quaternion realRotation;
@@ -18,8 +20,10 @@ public class PlayerController : NetworkBehaviour {
 	Animator anim;
 	CharacterController cc;
 	NavMeshAgent nma;
+	Rigidbody rb;
 
 	int groundLayer;
+	float animForward;
 	float updateInterval;
 
 	public override void OnStartLocalPlayer() {
@@ -31,6 +35,7 @@ public class PlayerController : NetworkBehaviour {
 		anim = GetComponent<Animator> ();
 		cc = GetComponent<CharacterController> ();
 		nma = GetComponent<NavMeshAgent> ();
+		rb = GetComponent<Rigidbody> ();
 
 		groundLayer = 1 << LayerMask.NameToLayer ("Ground");
 	}
@@ -38,10 +43,15 @@ public class PlayerController : NetworkBehaviour {
 	void Update() {
 		MouseInput ();
 		Animate ();
+		Sync ();
+
+		if (isLocalPlayer && stunned) {
+			nma.ResetPath ();
+		}
 	}
 
 	void MouseInput() {
-		if (isLocalPlayer) {
+		if (isLocalPlayer && !stunned) {
 			if (Input.GetMouseButton (0)) {
 				RaycastHit hit;
 				Ray ray = Camera.main.ScreenPointToRay (Input.mousePosition);
@@ -49,12 +59,6 @@ public class PlayerController : NetworkBehaviour {
 				if (Physics.Raycast (ray, out hit, Mathf.Infinity, groundLayer)) {
 					nma.SetDestination (hit.point);
 				}
-			}
-
-			updateInterval += Time.deltaTime;
-			if (updateInterval > 0.11f) {
-				updateInterval = 0f;
-				CmdSync (transform.position, transform.rotation);
 			}
 		} else {
 			transform.position = Vector3.Lerp (transform.position, realPosition, 0.1f);
@@ -64,14 +68,24 @@ public class PlayerController : NetworkBehaviour {
 
 	void Animate() {
 		if (isLocalPlayer) {
-			float forward = nma.velocity.magnitude / nma.speed;
-			anim.SetFloat ("forward", forward);
-
-			CmdSyncAnim (forward);
+			animForward = nma.velocity.magnitude / nma.speed;
+			anim.SetFloat ("forward", animForward);
 		} else {
 			float forward = anim.GetFloat ("forward");
 			forward = Mathf.Lerp (forward, syncFwd, 0.1f);
 			anim.SetFloat ("forward", forward);
+		}
+	}
+
+	void Sync() {
+		if (isLocalPlayer) {
+			updateInterval += Time.deltaTime;
+
+			if (updateInterval > 0.11f) {
+				updateInterval = 0f;
+				CmdSync (transform.position, transform.rotation);
+				CmdSyncAnim (animForward);
+			}
 		}
 	}
 
@@ -84,5 +98,24 @@ public class PlayerController : NetworkBehaviour {
 	[Command]
 	void CmdSyncAnim(float fwd) {
 		syncFwd = fwd;
+	}
+
+	[Command]
+	void CmdRecover() {
+		stunned = false;
+	}
+
+	[Command]
+	public void CmdStun(float time) {
+		stunned = true;
+
+		nma.ResetPath ();
+
+		StartCoroutine (StunForSeconds (time));
+	}
+
+	IEnumerator StunForSeconds(float time) {
+		yield return new WaitForSeconds(time);
+		CmdRecover ();
 	}
 }

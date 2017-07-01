@@ -10,7 +10,7 @@ public class Health : NetworkBehaviour {
 	[SyncVar]
 	public int currentHealth = maxHealth;
 
-	public void TakeDamage(int amount)
+	public void TakeDamage(int amount, bool stun)
 	{
 		if (!isServer)
 		{
@@ -22,6 +22,10 @@ public class Health : NetworkBehaviour {
 		{
 			currentHealth = 0;
 			Debug.Log("Dead!");
+		}
+
+		if (stun) {
+			GetComponent<PlayerController> ().Stun ();
 		}
 	}
 }

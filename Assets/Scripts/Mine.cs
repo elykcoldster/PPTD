@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 
 public class Mine : MonoBehaviour {
 
@@ -15,12 +16,17 @@ public class Mine : MonoBehaviour {
 	}
 
 	void OnCollisionEnter(Collision c) {
+		if (c.gameObject.layer != LayerMask.NameToLayer ("Player")) {
+			return;
+		}
+
 		PlayerController pc = c.gameObject.GetComponent<PlayerController> ();
 		Health health = c.gameObject.GetComponent<Health> ();
 
 		if (health != null) {
-			health.TakeDamage (10);
-			pc.CmdStun (2f);
+			health.TakeDamage (10, true);
 		}
+
+		Destroy (gameObject);
 	}
 }

@@ -8,6 +8,8 @@ using UnityEngine.Networking;
 [RequireComponent (typeof(Animator))]
 public class PlayerController : NetworkBehaviour {
 
+	public const float STUN_TIME = 1.133f;
+
 	[SyncVar]
 	public bool stunned;
 	[SyncVar]
@@ -89,6 +91,14 @@ public class PlayerController : NetworkBehaviour {
 		}
 	}
 
+	public void Stun() {
+		if (isLocalPlayer) {
+			CmdStun ();
+		} else {
+			RpcStun ();
+		}
+	}
+
 	[Command]
 	void CmdSync(Vector3 position, Quaternion rotation) {
 		realPosition = position;
@@ -106,12 +116,23 @@ public class PlayerController : NetworkBehaviour {
 	}
 
 	[Command]
-	public void CmdStun(float time) {
+	void CmdStun() {
 		stunned = true;
 
 		nma.ResetPath ();
+		GetComponent<NetworkAnimator> ().SetTrigger ("stunned");
 
-		StartCoroutine (StunForSeconds (time));
+		StartCoroutine (StunForSeconds (STUN_TIME));
+	}
+
+	[ClientRpc]
+	void RpcStun() {
+		stunned = true;
+
+		nma.ResetPath ();
+		GetComponent<NetworkAnimator> ().SetTrigger ("stunned");
+
+		StartCoroutine (StunForSeconds (STUN_TIME));
 	}
 
 	IEnumerator StunForSeconds(float time) {

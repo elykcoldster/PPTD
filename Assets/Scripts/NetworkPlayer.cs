@@ -6,7 +6,7 @@ using UnityEngine.Networking;
 
 [RequireComponent (typeof(NavMeshAgent))]
 [RequireComponent (typeof(Animator))]
-public class PlayerController : NetworkBehaviour {
+public class NetworkPlayer : NetworkBehaviour {
 
 	public const float STUN_TIME = 1.133f;
 
@@ -19,10 +19,14 @@ public class PlayerController : NetworkBehaviour {
 	[SyncVar]
 	float syncFwd;
 
+	[SyncVar]
+	public int playerId;
+
 	Animator anim;
 	CharacterController cc;
 	NavMeshAgent nma;
 	Rigidbody rb;
+	NetworkMan netManager;
 
 	int groundLayer;
 	float animForward;
@@ -31,6 +35,24 @@ public class PlayerController : NetworkBehaviour {
 	public override void OnStartLocalPlayer() {
 		CamMOBA cm = FindObjectOfType<CamMOBA> () as CamMOBA;
 		cm.SetTarget (transform);
+	}
+
+	[Client]
+	public override void OnStartClient() {
+		DontDestroyOnLoad (this);
+		if (netManager == null) {
+			netManager = NetworkMan.instance;
+		}
+
+		base.OnStartClient ();
+		Debug.Log ("Client Network Player Start");
+
+		netManager.RegisterNetworkPlayer (this);
+	}
+
+	public override void OnStopAuthority() {
+		base.OnStopAuthority ();
+		Debug.Log ("Client Network Player Destroyed.");
 	}
 
 	void Start() {
@@ -91,6 +113,10 @@ public class PlayerController : NetworkBehaviour {
 		}
 	}
 
+	/**
+	 * Public Functions
+	 **/
+
 	public void Stun() {
 		if (isLocalPlayer) {
 			CmdStun ();
@@ -99,6 +125,13 @@ public class PlayerController : NetworkBehaviour {
 		}
 	}
 
+	public int PlayerId() {
+		return this.playerId;
+	}
+
+	/**
+	 * Commands
+	 **/
 	[Command]
 	void CmdSync(Vector3 position, Quaternion rotation) {
 		realPosition = position;
@@ -138,5 +171,10 @@ public class PlayerController : NetworkBehaviour {
 	IEnumerator StunForSeconds(float time) {
 		yield return new WaitForSeconds(time);
 		CmdRecover ();
+	}
+
+	[Server]
+	public void SetPlayerId(int playerId) {
+		this.playerId = playerId;
 	}
 }

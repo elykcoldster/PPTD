@@ -20,7 +20,7 @@ public class Mine : MonoBehaviour {
 			return;
 		}
 
-		PlayerController pc = c.gameObject.GetComponent<PlayerController> ();
+		NetworkPlayer pc = c.gameObject.GetComponent<NetworkPlayer> ();
 		Health health = c.gameObject.GetComponent<Health> ();
 
 		if (health != null) {

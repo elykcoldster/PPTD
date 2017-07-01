@@ -25,7 +25,7 @@ public class Health : NetworkBehaviour {
 		}
 
 		if (stun) {
-			GetComponent<PlayerController> ().Stun ();
+			GetComponent<NetworkPlayer> ().Stun ();
 		}
 	}
 }

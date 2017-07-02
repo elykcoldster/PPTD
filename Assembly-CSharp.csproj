@@ -47,10 +47,14 @@
   </ItemGroup>
   <ItemGroup>
      <Compile Include="Assets\Scripts\CamMOBA.cs" />
+     <Compile Include="Assets\Scripts\ChatBox.cs" />
+     <Compile Include="Assets\Scripts\ChatInput.cs" />
      <Compile Include="Assets\Scripts\Health.cs" />
      <Compile Include="Assets\Scripts\Mine.cs" />
      <Compile Include="Assets\Scripts\NetworkMan.cs" />
      <Compile Include="Assets\Scripts\NetworkPlayer.cs" />
+     <Compile Include="Assets\Scripts\SpawnManager.cs" />
+     <Compile Include="Assets\Scripts\SpawnPoint.cs" />
      <Compile Include="Assets\Scripts\Wall.cs" />
      <Compile Include="Assets\UnityChan\Scripts\CameraController.cs" />
      <Compile Include="Assets\UnityChan\Scripts\FaceUpdate.cs" />

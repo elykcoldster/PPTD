@@ -113,6 +113,10 @@ public class NetworkPlayer : NetworkBehaviour {
 		}
 	}
 
+	void OnDestroy() {
+		NetworkMan.instance.DeregisterNetworkPlayer (this);
+	}
+
 	/**
 	 * Public Functions
 	 **/

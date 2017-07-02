@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.Networking;
 
 public class NetworkMan : NetworkManager {
@@ -19,8 +20,14 @@ public class NetworkMan : NetworkManager {
 		}
 	}
 
+	void UpdatePlayerIDs() {
+		for (int i = 0; i < connectedPlayers.Count; i++) {
+			connectedPlayers [i].SetPlayerId (i);
+		}
+	}
+
 	public void RegisterNetworkPlayer(NetworkPlayer newPlayer) {
-		Debug.Log ("Player joined");
+		Debug.Log ("Player Connected.");
 
 		connectedPlayers.Add (newPlayer);
 
@@ -29,10 +36,32 @@ public class NetworkMan : NetworkManager {
 		}
 	}
 
-	void UpdatePlayerIDs() {
-		for (int i = 0; i < connectedPlayers.Count; i++) {
-			connectedPlayers [i].SetPlayerId (i);
+	public void DeregisterNetworkPlayer(NetworkPlayer removedPlayer) {
+		Debug.Log ("Removed Player ID: " + removedPlayer.playerId.ToString());
+
+		int index = connectedPlayers.IndexOf (removedPlayer);
+
+		if (index >= 0) {
+			connectedPlayers.RemoveAt (index);
 		}
+
+		UpdatePlayerIDs ();
+	}
+
+	public void Host() {
+		StartHost ();
+	}
+
+	public void Exit() {
+		StopHost ();
+	}
+
+	public void LANClient() {
+		StartClient ();
+	}
+
+	public void MatchMaker() {
+		StartMatchMaker ();
 	}
 
 	public override void OnClientDisconnect(NetworkConnection conn)

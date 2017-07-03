@@ -4,13 +4,22 @@ using UnityEngine;
 
 public class SpawnManager : MonoBehaviour {
 
-	// Use this for initialization
-	void Start () {
-		
+	public static SpawnManager instance;
+
+	public SpawnPoint[] spawnPoints;
+
+	void Awake() {
+		if (instance != null) {
+			Destroy (gameObject);
+		} else {
+			instance = this;
+			DontDestroyOnLoad (this.gameObject);
+
+			spawnPoints = GameObject.FindObjectsOfType<SpawnPoint> ();
+		}
 	}
 	
-	// Update is called once per frame
-	void Update () {
-		
+	public SpawnPoint GetSpawnPointByID(int id) {
+		return spawnPoints[id];
 	}
 }

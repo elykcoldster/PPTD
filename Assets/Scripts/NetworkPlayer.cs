@@ -48,6 +48,11 @@ public class NetworkPlayer : NetworkBehaviour {
 		Debug.Log ("Client Network Player Start");
 
 		netManager.RegisterNetworkPlayer (this);
+
+		SpawnPoint spawnPoint = SpawnManager.instance.GetSpawnPointByID (playerId);
+		transform.position = spawnPoint.transform.position;
+
+		GetComponent<NavMeshAgent> ().enabled = true;
 	}
 
 	public override void OnStopAuthority() {

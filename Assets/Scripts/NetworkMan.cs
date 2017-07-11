@@ -9,6 +9,7 @@ public class NetworkMan : NetworkManager {
 	public static NetworkMan instance;
 
 	public List<NetworkPlayer> connectedPlayers;
+	public GameObject healthBar;
 
 	protected virtual void Awake() {
 		if (instance != null) {

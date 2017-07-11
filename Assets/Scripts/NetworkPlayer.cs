@@ -21,16 +21,21 @@ public class NetworkPlayer : NetworkBehaviour {
 
 	[SyncVar]
 	public int playerId;
+	[SyncVar]
+	public float fireRate = 4f;
+	public GameObject projectile;
 
 	Animator anim;
 	CharacterController cc;
 	NavMeshAgent nma;
 	Rigidbody rb;
 	NetworkMan netManager;
+	HealthBar healthBar;
 
 	int groundLayer;
 	float animForward;
 	float updateInterval;
+	float shootInterval;
 
 	public override void OnStartLocalPlayer() {
 		CamMOBA cm = FindObjectOfType<CamMOBA> () as CamMOBA;
@@ -89,9 +94,24 @@ public class NetworkPlayer : NetworkBehaviour {
 					nma.SetDestination (hit.point);
 				}
 			}
+
+			if (Input.GetMouseButton (1)) {
+				RaycastHit hit;
+				Ray ray = Camera.main.ScreenPointToRay (Input.mousePosition);
+
+				if (Physics.Raycast (ray, out hit, Mathf.Infinity, groundLayer)) {
+					nma.ResetPath ();
+					Vector3 targetDir = hit.point - transform.position;
+					float step = nma.angularSpeed * Mathf.Deg2Rad * Time.deltaTime;
+					Vector3 newDir = Vector3.RotateTowards (transform.forward, targetDir, step, 0f);
+
+					transform.rotation = Quaternion.LookRotation (newDir);
+					CmdFire ();
+				}
+			}
 		} else {
-			transform.position = Vector3.Lerp (transform.position, realPosition, 0.1f);
-			transform.rotation = Quaternion.Lerp (transform.rotation, realRotation, 0.1f);
+			transform.position = Vector3.Lerp (transform.position, realPosition, 12f * Time.deltaTime);
+			transform.rotation = Quaternion.Lerp (transform.rotation, realRotation, 12f * Time.deltaTime);
 		}
 	}
 
@@ -116,6 +136,11 @@ public class NetworkPlayer : NetworkBehaviour {
 				CmdSyncAnim (animForward);
 			}
 		}
+
+		shootInterval += Time.deltaTime;
+		if (shootInterval >= 1 / fireRate) {
+			shootInterval = 1 / fireRate;
+		}
 	}
 
 	void OnDestroy() {
@@ -136,6 +161,14 @@ public class NetworkPlayer : NetworkBehaviour {
 
 	public int PlayerId() {
 		return this.playerId;
+	}
+
+	public void SetHealthBar(HealthBar hb) {
+		this.healthBar = hb;
+	}
+
+	public HealthBar HealthBar() {
+		return this.healthBar;
 	}
 
 	/**
@@ -165,6 +198,20 @@ public class NetworkPlayer : NetworkBehaviour {
 		GetComponent<NetworkAnimator> ().SetTrigger ("stunned");
 
 		StartCoroutine (StunForSeconds (STUN_TIME));
+	}
+
+	[Command]
+	void CmdFire() {
+		if (shootInterval < 1 / fireRate) {
+			return;
+		} else {
+			shootInterval = 0f;
+		}
+		GameObject p = (GameObject)Instantiate (projectile);
+		p.transform.position = transform.position + Vector3.up + transform.forward * nma.radius;
+		p.transform.rotation = transform.rotation;
+
+		NetworkServer.Spawn (p);
 	}
 
 	[ClientRpc]

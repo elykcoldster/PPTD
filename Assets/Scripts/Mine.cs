@@ -5,6 +5,8 @@ using UnityEngine.Networking;
 
 public class Mine : MonoBehaviour {
 
+	public int damage = 10;
+
 	// Use this for initialization
 	void Start () {
 		
@@ -24,7 +26,7 @@ public class Mine : MonoBehaviour {
 		Health health = c.gameObject.GetComponent<Health> ();
 
 		if (health != null) {
-			health.TakeDamage (10, true);
+			health.TakeDamage (damage, true);
 		}
 
 		Destroy (gameObject);

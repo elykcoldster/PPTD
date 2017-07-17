@@ -21,6 +21,7 @@ public class Health : NetworkBehaviour {
 		if (currentHealth <= 0)
 		{
 			currentHealth = 0;
+			GetComponent<NetworkPlayer> ().Dead ();
 			Debug.Log("Dead!");
 		}
 

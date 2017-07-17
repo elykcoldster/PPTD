@@ -23,6 +23,10 @@ public class NetworkPlayer : NetworkBehaviour {
 	public int playerId;
 	[SyncVar]
 	public float fireRate = 4f;
+	[SyncVar]
+	public float damage = 5f;
+	[SyncVar]
+	public bool dead;
 	public GameObject projectile;
 
 	Animator anim;
@@ -58,6 +62,14 @@ public class NetworkPlayer : NetworkBehaviour {
 		transform.position = spawnPoint.transform.position;
 
 		GetComponent<NavMeshAgent> ().enabled = true;
+
+		if (playerId == 0) {
+			tag = "Predator";
+			gameObject.AddComponent<Predator> ();
+		} else {
+			tag = "Prey";
+			gameObject.AddComponent<Prey> ();
+		}
 	}
 
 	public override void OnStopAuthority() {
@@ -85,6 +97,9 @@ public class NetworkPlayer : NetworkBehaviour {
 	}
 
 	void MouseInput() {
+		if (dead) {
+			return;
+		}
 		if (isLocalPlayer && !stunned) {
 			if (Input.GetMouseButton (0)) {
 				RaycastHit hit;
@@ -106,7 +121,7 @@ public class NetworkPlayer : NetworkBehaviour {
 					Vector3 newDir = Vector3.RotateTowards (transform.forward, targetDir, step, 0f);
 
 					transform.rotation = Quaternion.LookRotation (newDir);
-					CmdFire ();
+					CmdFire (targetDir);
 				}
 			}
 		} else {
@@ -159,6 +174,17 @@ public class NetworkPlayer : NetworkBehaviour {
 		}
 	}
 
+	public void Dead() {
+		if (dead) {
+			return;
+		}
+		if (isLocalPlayer) {
+			CmdDead ();
+		} else {
+			RpcDead ();
+		}
+	}
+
 	public int PlayerId() {
 		return this.playerId;
 	}
@@ -169,6 +195,14 @@ public class NetworkPlayer : NetworkBehaviour {
 
 	public HealthBar HealthBar() {
 		return this.healthBar;
+	}
+
+	public void ChangeFireRate(float fr) {
+		if (isLocalPlayer) {
+			CmdChangeFireRate (fr);
+		} else {
+			
+		}
 	}
 
 	/**
@@ -201,17 +235,32 @@ public class NetworkPlayer : NetworkBehaviour {
 	}
 
 	[Command]
-	void CmdFire() {
+	void CmdDead() {
+		this.dead = true;
+		GetComponent<Collider> ().enabled = false;
+
+		nma.ResetPath ();
+		GetComponent<NetworkAnimator> ().SetTrigger ("dead");
+	}
+
+	[Command]
+	void CmdFire(Vector3 dir) {
 		if (shootInterval < 1 / fireRate) {
 			return;
 		} else {
 			shootInterval = 0f;
 		}
 		GameObject p = (GameObject)Instantiate (projectile);
-		p.transform.position = transform.position + Vector3.up + transform.forward * nma.radius;
-		p.transform.rotation = transform.rotation;
+		p.transform.position = transform.position + Vector3.up + dir.normalized * (nma.radius + 0.1f);
+		p.transform.LookAt (p.transform.position + dir);
+		p.GetComponent<Projectile> ().SetDamage (damage);
 
 		NetworkServer.Spawn (p);
+	}
+
+	[Command]
+	void CmdChangeFireRate (float fr) {
+		this.fireRate = fr;
 	}
 
 	[ClientRpc]
@@ -222,6 +271,20 @@ public class NetworkPlayer : NetworkBehaviour {
 		GetComponent<NetworkAnimator> ().SetTrigger ("stunned");
 
 		StartCoroutine (StunForSeconds (STUN_TIME));
+	}
+
+	[ClientRpc]
+	void RpcDead() {
+		this.dead = true;
+		GetComponent<Collider> ().enabled = false;
+
+		nma.ResetPath ();
+		GetComponent<NetworkAnimator> ().SetTrigger ("dead");
+	}
+
+	[ClientRpc]
+	void RpcChangeFireRate(float fr) {
+		this.fireRate = fr;
 	}
 
 	IEnumerator StunForSeconds(float time) {

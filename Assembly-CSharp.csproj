@@ -49,11 +49,14 @@
      <Compile Include="Assets\Scripts\CamMOBA.cs" />
      <Compile Include="Assets\Scripts\ChatBox.cs" />
      <Compile Include="Assets\Scripts\ChatInput.cs" />
+     <Compile Include="Assets\Scripts\Global.cs" />
      <Compile Include="Assets\Scripts\Health.cs" />
      <Compile Include="Assets\Scripts\HealthBar.cs" />
+     <Compile Include="Assets\Scripts\LandingZone.cs" />
      <Compile Include="Assets\Scripts\Mine.cs" />
      <Compile Include="Assets\Scripts\NetworkMan.cs" />
      <Compile Include="Assets\Scripts\NetworkPlayer.cs" />
+     <Compile Include="Assets\Scripts\PodPiece.cs" />
      <Compile Include="Assets\Scripts\Predator.cs" />
      <Compile Include="Assets\Scripts\Prey.cs" />
      <Compile Include="Assets\Scripts\Projectile.cs" />

@@ -18,6 +18,8 @@ public class NetworkPlayer : NetworkBehaviour {
 	Quaternion realRotation;
 	[SyncVar]
 	float syncFwd;
+	[SyncVar]
+	public bool victory;
 
 	[SyncVar]
 	public int playerId;
@@ -97,7 +99,7 @@ public class NetworkPlayer : NetworkBehaviour {
 	}
 
 	void MouseInput() {
-		if (dead) {
+		if (dead || victory || Global.instance.victory) {
 			return;
 		}
 		if (isLocalPlayer && !stunned) {
@@ -185,6 +187,14 @@ public class NetworkPlayer : NetworkBehaviour {
 		}
 	}
 
+	public void Victory() {
+		if (isLocalPlayer) {
+			CmdVictory ();
+		} else {
+			RpcVictory ();
+		}
+	}
+
 	public int PlayerId() {
 		return this.playerId;
 	}
@@ -263,6 +273,15 @@ public class NetworkPlayer : NetworkBehaviour {
 		this.fireRate = fr;
 	}
 
+	[Command]
+	void CmdVictory() {
+		victory = true;
+		GetComponent<Collider> ().enabled = false;
+
+		nma.ResetPath ();
+		GetComponent<NetworkAnimator> ().SetTrigger ("victory");
+	}
+
 	[ClientRpc]
 	void RpcStun() {
 		stunned = true;
@@ -278,13 +297,21 @@ public class NetworkPlayer : NetworkBehaviour {
 		this.dead = true;
 		GetComponent<Collider> ().enabled = false;
 
-		nma.ResetPath ();
 		GetComponent<NetworkAnimator> ().SetTrigger ("dead");
 	}
 
 	[ClientRpc]
 	void RpcChangeFireRate(float fr) {
 		this.fireRate = fr;
+	}
+
+	[ClientRpc]
+	void RpcVictory() {
+		victory = true;
+		GetComponent<Collider> ().enabled = false;
+
+		nma.ResetPath ();
+		GetComponent<NetworkAnimator> ().SetTrigger ("victory");
 	}
 
 	IEnumerator StunForSeconds(float time) {

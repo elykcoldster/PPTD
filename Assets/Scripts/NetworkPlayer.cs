@@ -46,6 +46,7 @@ public class NetworkPlayer : NetworkBehaviour {
 	public override void OnStartLocalPlayer() {
 		CamMOBA cm = FindObjectOfType<CamMOBA> () as CamMOBA;
 		cm.SetTarget (transform);
+		Global.instance.gameOverScreen.GetComponent<GameOverScreen> ().SetTarget (transform);
 	}
 
 	[Client]
@@ -147,7 +148,7 @@ public class NetworkPlayer : NetworkBehaviour {
 		if (isLocalPlayer) {
 			updateInterval += Time.deltaTime;
 
-			if (updateInterval > 0.11f) {
+			if (updateInterval > 0.05f) {
 				updateInterval = 0f;
 				CmdSync (transform.position, transform.rotation);
 				CmdSyncAnim (animForward);

@@ -20,7 +20,7 @@ public class PodPiece : NetworkBehaviour {
 	void OnTriggerEnter(Collider c) {
 		if (c.GetComponent<Prey> () != null) {
 			Global.instance.IncrementPodPieces ();
-			Destroy (gameObject);
+			gameObject.SetActive (false);
 		}
 	}
 }

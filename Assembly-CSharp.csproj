@@ -46,6 +46,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+     <Compile Include="Assets\CreateGame.cs" />
+     <Compile Include="Assets\GameOverScreen.cs" />
+     <Compile Include="Assets\LobbyPanel.cs" />
+     <Compile Include="Assets\LobbyPlayer.cs" />
+     <Compile Include="Assets\LobbyPlayerList.cs" />
+     <Compile Include="Assets\MainMenuUI.cs" />
+     <Compile Include="Assets\NetPlayer.cs" />
      <Compile Include="Assets\Scripts\CamMOBA.cs" />
      <Compile Include="Assets\Scripts\ChatBox.cs" />
      <Compile Include="Assets\Scripts\ChatInput.cs" />
@@ -64,6 +71,7 @@
      <Compile Include="Assets\Scripts\SpawnPoint.cs" />
      <Compile Include="Assets\Scripts\Turret.cs" />
      <Compile Include="Assets\Scripts\Wall.cs" />
+     <Compile Include="Assets\Singleton.cs" />
      <Compile Include="Assets\UnityChan\Scripts\CameraController.cs" />
      <Compile Include="Assets\UnityChan\Scripts\FaceUpdate.cs" />
      <Compile Include="Assets\UnityChan\Scripts\IdleChanger.cs" />

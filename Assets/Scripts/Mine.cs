@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 
-public class Mine : MonoBehaviour {
+public class Mine : NetworkBehaviour {
 
 	public int damage = 10;
 
@@ -29,6 +29,6 @@ public class Mine : MonoBehaviour {
 			health.TakeDamage (damage, true);
 		}
 
-		Destroy (gameObject);
+		gameObject.SetActive (false);
 	}
 }

@@ -59,10 +59,10 @@ public class NetworkPlayer : NetworkBehaviour {
 		base.OnStartClient ();
 		Debug.Log ("Client Network Player Start");
 
-		netManager.RegisterNetworkPlayer (this);
+		// netManager.RegisterNetworkPlayer (this);
 
-		SpawnPoint spawnPoint = SpawnManager.instance.GetSpawnPointByID (playerId);
-		transform.position = spawnPoint.transform.position;
+		//SpawnPoint spawnPoint = SpawnManager.instance.GetSpawnPointByID (playerId);
+		//transform.position = spawnPoint.transform.position;
 
 		GetComponent<NavMeshAgent> ().enabled = true;
 
@@ -162,7 +162,7 @@ public class NetworkPlayer : NetworkBehaviour {
 	}
 
 	void OnDestroy() {
-		NetworkMan.instance.DeregisterNetworkPlayer (this);
+		// NetworkMan.instance.DeregisterNetworkPlayer (this);
 	}
 
 	/**

@@ -46,13 +46,22 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+     <Compile Include="Assets\CameraFollow.cs" />
      <Compile Include="Assets\CreateGame.cs" />
+     <Compile Include="Assets\DataStore.cs" />
+     <Compile Include="Assets\GameManager.cs" />
      <Compile Include="Assets\GameOverScreen.cs" />
      <Compile Include="Assets\LobbyPanel.cs" />
      <Compile Include="Assets\LobbyPlayer.cs" />
      <Compile Include="Assets\LobbyPlayerList.cs" />
+     <Compile Include="Assets\LobbyServerEntry.cs" />
+     <Compile Include="Assets\LobbyServerList.cs" />
      <Compile Include="Assets\MainMenuUI.cs" />
      <Compile Include="Assets\NetPlayer.cs" />
+     <Compile Include="Assets\PlayerDataManager.cs" />
+     <Compile Include="Assets\PlayerManager.cs" />
+     <Compile Include="Assets\PlayerMovement.cs" />
+     <Compile Include="Assets\RoleLibrary.cs" />
      <Compile Include="Assets\Scripts\CamMOBA.cs" />
      <Compile Include="Assets\Scripts\ChatBox.cs" />
      <Compile Include="Assets\Scripts\ChatInput.cs" />
@@ -63,6 +72,7 @@
      <Compile Include="Assets\Scripts\Mine.cs" />
      <Compile Include="Assets\Scripts\NetworkMan.cs" />
      <Compile Include="Assets\Scripts\NetworkPlayer.cs" />
+     <Compile Include="Assets\Scripts\PersistentSingleton.cs" />
      <Compile Include="Assets\Scripts\PodPiece.cs" />
      <Compile Include="Assets\Scripts\Predator.cs" />
      <Compile Include="Assets\Scripts\Prey.cs" />

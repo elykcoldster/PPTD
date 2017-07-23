@@ -15,6 +15,8 @@ public class MainMenuUI : Singleton<MainMenuUI> {
 	protected CanvasGroup lobbyPanel;
 	[SerializeField]
 	protected CanvasGroup serverListPanel;
+	[SerializeField]
+	protected LobbyPlayerList lobbyPlayerList;
 
 	private CanvasGroup currentPanel;
 
@@ -22,18 +24,16 @@ public class MainMenuUI : Singleton<MainMenuUI> {
 
 	private bool readyToFireTask;
 
-	// Use this for initialization
-	void Start () {
-		
-	}
-	
-	// Update is called once per frame
-	void Update () {
-		
+	public LobbyPlayerList playerList {
+		get {
+			return this.lobbyPlayerList;
+		}
 	}
 
-	private void GoToCreateGamePanel() {
-		ShowPanel (createGamePanel);
+	public LobbyPanel lobbyPanelObject {
+		get {
+			return this.lobbyPanel.GetComponent<LobbyPanel> ();
+		}
 	}
 
 	public void ShowPanel(CanvasGroup newPanel) {
@@ -51,12 +51,25 @@ public class MainMenuUI : Singleton<MainMenuUI> {
 		DoIfNetworkReady (GoToCreateGamePanel);
 	}
 
+	public void OnFindGameClicked() {
+		DoIfNetworkReady (GoToFindGamePanel);
+	}
+
 	public void ShowDefaultPanel() {
 		ShowPanel (defaultPanel);
 	}
 
 	public void ShowLobbyPanel() {
 		ShowPanel (lobbyPanel);
+	}
+
+	public void ShowServerListPanel() {
+		ShowPanel (serverListPanel);
+	}
+
+	public void ShowLobbyPanelForConnection() {
+		ShowPanel (lobbyPanel);
+		NetworkMan.instance.gameModeUpdated -= ShowLobbyPanelForConnection;
 	}
 
 	public void DoIfNetworkReady(Action task) {
@@ -73,5 +86,14 @@ public class MainMenuUI : Singleton<MainMenuUI> {
 		} else {
 			task ();
 		}
+	}
+
+	private void GoToCreateGamePanel() {
+		ShowPanel (createGamePanel);
+	}
+
+	private void GoToFindGamePanel() {
+		ShowServerListPanel ();
+		NetworkMan.instance.StartMatchmakingClient ();
 	}
 }

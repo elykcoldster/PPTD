@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Networking;
 using UnityEngine.Networking.Match;
+using UnityEngine.Networking.Types;
 using UnityEngine.SceneManagement;
 
 public enum SceneChangeMode {
@@ -37,11 +38,16 @@ public class NetworkMan : NetworkManager {
 	[SerializeField]
 	protected NetPlayer networkPlayerPrefab;
 
-	public List<NetworkPlayer> connectedPlayers;
+	public List<NetPlayer> connectedPlayers;
 
 	public event Action<bool, MatchInfo> matchCreated;
+	public event Action<bool, MatchInfo> matchJoined;
+	public event Action gameModeUpdated;
 
 	private Action<bool, MatchInfo> nextMatchCreatedCallback;
+	private Action<bool, MatchInfo> nextMatchJoinedCallback;
+
+	private SceneChangeMode sceneChangeMode;
 
 	public NetworkState state {
 		get;
@@ -53,23 +59,43 @@ public class NetworkMan : NetworkManager {
 		protected set;
 	}
 
+	public bool canSelectPredator {
+		get {
+			int numPredator = 0;
+
+			for (int i = 0; i < connectedPlayers.Count; i++) {
+				if (connectedPlayers [i].PlayerRole == 0) {
+					numPredator++;
+				}
+			}
+
+			return (float) numPredator < (float) connectedPlayers.Count / 2.5f;
+		}
+	}
+
+	public bool hasSufficientPlayers {
+		get {
+			return connectedPlayers.Count >= 2;
+		}
+	}
+
 	protected virtual void Awake() {
 		if (instance != null) {
 			Destroy (gameObject);
 		} else {
 			instance = this;
 
-			connectedPlayers = new List<NetworkPlayer> ();
+			connectedPlayers = new List<NetPlayer> ();
 		}
 	}
 
-	void UpdatePlayerIDs() {
+	protected virtual void UpdatePlayerIDs() {
 		for (int i = 0; i < connectedPlayers.Count; i++) {
 			connectedPlayers [i].SetPlayerId (i);
 		}
 	}
 
-	public void RegisterNetworkPlayer(NetworkPlayer newPlayer) {
+	public void RegisterNetworkPlayer(NetPlayer newPlayer) {
 		Debug.Log ("Player Connected.");
 
 		connectedPlayers.Add (newPlayer);
@@ -77,10 +103,18 @@ public class NetworkMan : NetworkManager {
 		if (NetworkServer.active) {
 			UpdatePlayerIDs ();
 		}
+
+		newPlayer.OnEnterLobbyScene ();
+
+		/*if (playerJoined != null) {
+			playerJoined (newPlayer);
+		}*/
+
+		newPlayer.gameDetailsReady += FireGameModeUpdated;
 	}
 
-	public void DeregisterNetworkPlayer(NetworkPlayer removedPlayer) {
-		Debug.Log ("Removed Player ID: " + removedPlayer.playerId.ToString());
+	public void DeregisterNetworkPlayer(NetPlayer removedPlayer) {
+		// Debug.Log ("Removed Player ID: " + removedPlayer.playerId.ToString());
 
 		int index = connectedPlayers.IndexOf (removedPlayer);
 
@@ -109,6 +143,52 @@ public class NetworkMan : NetworkManager {
 
 	public void Disconnect() {
 		StopMatchmakingGame ();
+	}
+
+	public bool AllPlayersReady() {
+		if (!hasSufficientPlayers) {
+			return false;
+		}
+
+		for (int i = 0; i < connectedPlayers.Count; i++) {
+			if (!connectedPlayers [i].Ready) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	public bool HasEnoughPredators() {
+		int numPredators = 0;
+
+		for (int i = 0; i < connectedPlayers.Count; i++) {
+			if (connectedPlayers [i].PlayerRole == 0) {
+				numPredators++;
+			}
+		}
+
+		return numPredators > 0;
+	}
+
+	public override void OnServerConnect(NetworkConnection conn) {
+		if (numPlayers >= multiplayerMaxPlayers || state != NetworkState.InLobby) {
+			conn.Disconnect ();
+		} else {
+			if (state == NetworkState.InLobby) {
+				ClearAllReadyStates ();
+			}
+		}
+
+		base.OnServerConnect (conn);
+	}
+
+	public override void OnServerDisconnect(NetworkConnection conn) {
+		base.OnServerDisconnect (conn);
+
+		if (state == NetworkState.InLobby) {
+			ClearAllReadyStates ();
+		}
 	}
 
 	public override void OnServerAddPlayer(NetworkConnection conn, short playerControllerId) {
@@ -178,6 +258,53 @@ public class NetworkMan : NetworkManager {
 		}
 	}
 
+	public override void OnMatchJoined (bool success, string extendedInfo, MatchInfo matchInfo) {
+		base.OnMatchJoined (success, extendedInfo, matchInfo);
+		Debug.Log ("Match joined.");
+
+		if (success) {
+			state = NetworkState.InLobby;
+		} else {
+			state = NetworkState.Pregame;
+		}
+
+		if (nextMatchJoinedCallback != null) {
+			nextMatchJoinedCallback (success, matchInfo);
+			nextMatchJoinedCallback = null;
+		}
+
+		if (matchJoined != null) {
+			matchJoined (success, matchInfo);
+		}
+	}
+
+	public override void OnClientSceneChanged (NetworkConnection conn)
+	{
+		base.OnClientSceneChanged (conn);
+
+		state = NetworkState.InGame;
+
+		for (int i = 0; i < connectedPlayers.Count; i++) {
+			NetPlayer np = connectedPlayers [i];
+			if (np != null) {
+				np.OnEnterGameScene ();
+			}
+		}
+	}
+
+	public void JoinMatchmakingGame(NetworkID networkId, Action<bool, MatchInfo> onJoin) {
+		if (gameType != NetworkGameType.Matchmaking ||
+			state != NetworkState.Pregame)
+		{
+			throw new InvalidOperationException("Game not in matching state. Make sure you call StartMatchmakingClient first.");
+		}
+
+		state = NetworkState.Connecting;
+
+		nextMatchJoinedCallback = onJoin;
+		matchMaker.JoinMatch(networkId, string.Empty, string.Empty, string.Empty, 0, 0, OnMatchJoined);
+	}
+
 	public void StartMatchMakingGame(string gameName, Action<bool, MatchInfo> onCreate) {
 		if (state != NetworkState.Inactive) {
 			throw new InvalidOperationException ("Network current active. Disconnect first.");
@@ -190,6 +317,16 @@ public class NetworkMan : NetworkManager {
 		nextMatchCreatedCallback = onCreate;
 
 		matchMaker.CreateMatch (gameName, (uint)multiplayerMaxPlayers, true, string.Empty, string.Empty, string.Empty, 0, 0, OnMatchCreate);
+	}
+
+	public void StartMatchmakingClient() {
+		if (state != NetworkState.Inactive) {
+			throw new InvalidOperationException ("Network currently active. Disconnect first.");
+		}
+
+		state = NetworkState.Pregame;
+		gameType = NetworkGameType.Matchmaking;
+		StartMatchMaker ();
 	}
 
 	private void StopMatchmakingGame() {
@@ -276,5 +413,50 @@ public class NetworkMan : NetworkManager {
 		}
 
 		state = NetworkState.Inactive;
+	}
+
+	public void ProgressToGameScene() {
+		Debug.Log ("Progress to Game Scene.");
+
+		ClearAllReadyStates ();
+
+		UnlistMatch ();
+
+		sceneChangeMode = SceneChangeMode.Game;
+
+		for (int i = 0; i < connectedPlayers.Count; i++) {
+			NetPlayer player = connectedPlayers [i];
+
+			if (player != null) {
+				player.RpcPrepareForLoad ();
+			}
+		}
+
+		ServerChangeScene ("bfield");
+	}
+
+	public NetPlayer GetPlayerById(int id) {
+		return connectedPlayers [id];
+	}
+
+	protected void FireGameModeUpdated() {
+		if (gameModeUpdated != null) {
+			gameModeUpdated ();
+		}
+	}
+
+	protected void UnlistMatch() {
+		if (gameType == NetworkGameType.Matchmaking && matchMaker != null) {
+			matchMaker.SetMatchAttributes (matchInfo.networkId, false, 0, (success, matchInfo) => Debug.Log ("Match Hidden"));
+		}
+	}
+
+	private void ClearAllReadyStates() {
+		for (int i = 0; i < connectedPlayers.Count; i++) {
+			NetPlayer player = connectedPlayers [i];
+			if (player != null) {
+				player.ClearReady ();
+			}
+		}
 	}
 }

@@ -29,7 +29,7 @@ namespace Exale.Utilities
 		/// <summary>
 		/// Gets whether an instance of this singleton exists
 		/// </summary>
-		public static bool s_InstanceExists { get { return instance != null; } }
+		public static bool InstanceExists { get { return instance != null; } }
 
 		/// <summary>
 		/// Awake method to associate singleton with instance
